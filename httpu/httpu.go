@@ -122,7 +122,7 @@ func (httpu *HTTPUClient) Do(
 	responseBytes := make([]byte, 2048)
 	for {
 		// 2048 bytes should be sufficient for most networks.
-		n, _, err := httpu.conn.ReadFrom(responseBytes)
+		_, _, err := httpu.conn.ReadFrom(responseBytes)
 		if err != nil {
 			if err, ok := err.(net.Error); ok {
 				if err.Timeout() {
@@ -137,7 +137,6 @@ func (httpu *HTTPUClient) Do(
 			return nil, err
 		}
 
-		fmt.Print(n)
 		formatedString := strings.Replace(string(responseBytes), "\r\n\x00", "\r\n\r\n\x00", -1)
 		formatedByte := []byte(formatedString)
 

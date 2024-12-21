@@ -24,27 +24,24 @@ type Device struct {
 func main() {
 	client, err := httpu.NewHTTPUClient()
 	if err != nil {
-		fmt.Print("Error client")
+		fmt.Println("Error client")
 		fmt.Errorf(err.Error())
 		return
 	}
 	defer client.Close()
 
 	responses, errSsdp := ssdp.SSDPRawSearch(client, "wifi_bulb", maxWaitSeconds, numSends)
-
 	if errSsdp != nil {
-		fmt.Print("Error ssdp")
+		fmt.Println("Error ssdp")
 		fmt.Errorf(errSsdp.Error())
 		return
 	}
 
 	devices := make([]Device, 0, len(responses))
 	for _, resp := range responses {
-		// loc := resp.Header.Get("Location")
 		loc, err := resp.Location()
-
 		if err != nil {
-			fmt.Print("Error Location")
+			fmt.Println("Error Location")
 			fmt.Errorf(errSsdp.Error())
 			return
 		}
@@ -55,23 +52,40 @@ func main() {
 		devices = append(devices, device)
 	}
 
+	commands := []string{}
+
 	if len(devices) > 0 {
-		conn, _ := telnet.DialTo(devices[0].Location.Host)
+		host := devices[0].Location.Host
+		fmt.Printf("connecting to %s\n", host)
+
+		conn, err := telnet.DialTo(host)
+		if err != nil {
+			fmt.Println("Error connecting to device")
+			fmt.Println(err.Error())
+			return
+		}
+		defer conn.Close()
 		r := 255
-		g := 0
-		b := 0
+		g := 255
+		b := 255
 
 		rgb := (r * 65536) + (g * 256) + b
 
-		command := "{ \"id\": 1, \"method\": \"set_power\", \"params\":[\"on\", \"smooth\", 500]}"
-		conn.Write([]byte(command))
-		conn.Write([]byte("\r\n"))
+		command := "{\"id\": 1, \"method\": \"set_power\", \"params\":[\"on\", \"smooth\", 500]}"
+		commands = append(commands, command)
 
-		time.Sleep(3 * time.Second)
+		command = fmt.Sprintf("{\"id\": 2,\"method\": \"set_rgb\",\"params\" :[%d, \"smooth\", 500]}", rgb)
+		commands = append(commands, command)
 
-		command = fmt.Sprintf("{\"id\":1,\"method\":\"set_rgb\",\"params\":[%d, \"smooth\", 500]}", rgb)
-		fmt.Println(command)
-		conn.Write([]byte(command))
-		conn.Write([]byte("\r\n"))
+		for _, command := range commands {
+			time.Sleep(3 * time.Second)
+			_, err := conn.Write([]byte(command + "\r\n"))
+			if err != nil {
+				fmt.Println("Error sending command")
+				fmt.Println(err.Error())
+				return
+			}
+			fmt.Printf("Sent command: %s\n", command)
+		}
 	}
 }
