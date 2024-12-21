@@ -4,7 +4,20 @@ A GO package that implements Yeelight WiFi Light Inter-Operation Specification.
 
 This code will find Yeelight lamp connected in LAN using Simple Service Discovery Protocol (SSDP), and send commands via Telnet Protocol.
 
-This package is heavily based on goupnp SSDP implementation. Thanks guys :)
+## How to use
+
+ 1. Plug in the yeelight smart bulb
+ 2. Turn on the light switch
+ 3. Run `go run main.go`
+
+By default it should turn on the bulb and change the collor to white. 
+
+You can change the commands in main.go file following the specifications of the section `4.1 COMMAND message` of the [Yeelight_Inter-Operation_Spec.pdf](./Yeelight_Inter-Operation_Spec.pdf)
+
+
+### Credits
+
+This package is heavily based on [goupnp SSDP implementation](https://github.com/huin/goupnp). Thanks guys :)
 
 ### References:
 
